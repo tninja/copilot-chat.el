@@ -213,16 +213,16 @@ Optional argument BUFFER is the buffer to write data in."
       (copilot-chat--write-buffer (copilot-chat--format-data prompt 'prompt))
       (push prompt copilot-chat--prompt-history)
       (setq copilot-chat--prompt-history-position nil)
-      (setq copilot-chat--callback-finished nil)  ; 重置标志变量
+      (setq copilot-chat--callback-finished nil)  ; Reset the flag variable
       (copilot-chat--ask prompt 'copilot-chat-prompt-cb)
       )))
 
 (defun copilot-chat-check-callback-smerge (code-buffer)
-  "检查回调是否完成,并在CODE-BUFFER中插入smerge块"
+  "Check if the callback is finished and insert smerge block in CODE-BUFFER."
   (if (not copilot-chat--callback-finished)
-      ;; 如果回调未完成,0.2秒后重试
+      ;; If the callback is not finished, retry after 0.2 seconds
       (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)
-    ;; 回调完成,尝试提取并插入smerge块
+    ;; Callback finished, try to extract and insert smerge block
     (when-let ((smerge-block-new-code (copilot-chat--extract-last-smerge-block-new-code)))
       (with-current-buffer code-buffer
         (if (not (use-region-p))
@@ -242,7 +242,7 @@ Optional argument BUFFER is the buffer to write data in."
         ))))
 
 (defun copilot-chat--extract-last-smerge-block-new-code ()
-  "从 BUFFER 中识别、提取并返回最后一个 smerge 格式的代码块。如果没有，返回 nil。"
+  "Identify, extract, and return the last smerge formatted code block from BUFFER. Return nil if none found."
   (with-current-buffer (get-buffer copilot-chat--buffer)
     (goto-char (point-max))
     (if (re-search-backward "^=======" nil t)
@@ -259,7 +259,6 @@ Optional argument BUFFER is the buffer to write data in."
          (question "Prompt to write new code: ")
          (instruction (read-string question nil 'copilot-chat--prompt-history))
          (prompt (concat "Do you know the emacs smerge-mode format? " instruction ". output in smerge format (start with <<<<<<<)")))
-    (copilot-chat-add-current-buffer)
     (copilot-chat--insert-and-send-prompt prompt)
     (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)
     (switch-to-buffer-other-window code-buffer)
@@ -275,7 +274,6 @@ Optional argument BUFFER is the buffer to write data in."
              (instruction (read-string question nil 'copilot-chat--prompt-history))
              (prompt (format "Do you know the emacs smerge-mode format? Rewrite the following code block: %s, with instruction: %s. Output in emacs smerge-mode code format (start with <<<<<<<) with original code and rewritten code"
                              code instruction)))
-        (copilot-chat-add-current-buffer)
         (copilot-chat--insert-and-send-prompt prompt)
         (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)
         (switch-to-buffer-other-window code-buffer)
@@ -283,7 +281,7 @@ Optional argument BUFFER is the buffer to write data in."
     (message "No region selected.")))
 
 (defun copilot-chat-mark-whole-defun ()
-  "标记整个函数，包括光标之前的内容。"
+  "Mark the entire function, including content before the cursor."
   (interactive)
   (beginning-of-defun)
   (set-mark (point))
@@ -295,7 +293,7 @@ Optional argument BUFFER is the buffer to write data in."
   (save-excursion
     (copilot-chat-mark-whole-defun)
     (copilot-chat-rewrite-selected-code-smerge))
-    (copilot-chat-mark-whole-defun) ;; 保持选中状态
+    (copilot-chat-mark-whole-defun) ;; Keep the region selected
   )
 
 ;;;###autoload
