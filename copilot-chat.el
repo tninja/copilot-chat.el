@@ -258,13 +258,14 @@ Optional argument BUFFER is the buffer to write data in."
   (let* ((code-buffer (current-buffer))
          (question "Prompt to write new code: ")
          (instruction (read-string question nil 'copilot-chat--prompt-history))
-         (prompt (concat instruction ". output in smerge format (start with <<<<<<<)")))
+         (prompt (concat "Do you know the emacs smerge-mode format? " instruction ". output in smerge format (start with <<<<<<<)")))
+    (copilot-chat-add-current-buffer)
     (copilot-chat--insert-and-send-prompt prompt)
     (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)
     (switch-to-buffer-other-window code-buffer)
     ))
 
-(defun copilot-chat-rewrite-existing-code-smerge ()
+(defun copilot-chat-rewrite-selected-code-smerge ()
   "Rewrite existing code in smerge format given prompt."
   (interactive)
   (if (use-region-p)
@@ -274,6 +275,7 @@ Optional argument BUFFER is the buffer to write data in."
              (instruction (read-string question nil 'copilot-chat--prompt-history))
              (prompt (format "Do you know the emacs smerge-mode format? Rewrite the following code block: %s, with instruction: %s. Output in emacs smerge-mode code format (start with <<<<<<<) with original code and rewritten code"
                              code instruction)))
+        (copilot-chat-add-current-buffer)
         (copilot-chat--insert-and-send-prompt prompt)
         (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)
         (switch-to-buffer-other-window code-buffer)
@@ -292,7 +294,7 @@ Optional argument BUFFER is the buffer to write data in."
   (interactive)
   (save-excursion
     (copilot-chat-mark-whole-defun)
-    (copilot-chat-rewrite-existing-code-smerge))
+    (copilot-chat-rewrite-selected-code-smerge))
     (copilot-chat-mark-whole-defun) ;; 保持选中状态
   )
 
