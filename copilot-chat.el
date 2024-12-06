@@ -184,12 +184,18 @@ Argument TYPE is the type of data to format: `answer` or `prompt`."
   (setq buffer-read-only t)
   (copilot-chat-list-refresh))
 
+(defvar copilot-chat--callback-finished nil
+  "标志变量，用于指示回调函数是否完成。")
+
 (defun copilot-chat-prompt-cb (content &optional buffer)
     "Function called by backend when data is received.
 Argument CONTENT is data received from backend.
 Optional argument BUFFER is the buffer to write data in."
   (if (string= content copilot-chat--magic)
-      (copilot-chat--write-buffer (copilot-chat--format-data "\n\n" 'answer) buffer)
+      (progn
+        (copilot-chat--write-buffer (copilot-chat--format-data "\n\n" 'answer) buffer)
+        (setq copilot-chat--callback-finished t)
+        )
     (copilot-chat--write-buffer (copilot-chat--format-data content 'answer) buffer))
   (unless buffer
     (with-current-buffer copilot-chat--buffer
@@ -207,7 +213,46 @@ Optional argument BUFFER is the buffer to write data in."
       (copilot-chat--write-buffer (copilot-chat--format-data prompt 'prompt))
       (push prompt copilot-chat--prompt-history)
       (setq copilot-chat--prompt-history-position nil)
-      (copilot-chat--ask prompt 'copilot-chat-prompt-cb))))
+      (setq copilot-chat--callback-finished nil)  ; 重置标志变量
+      (copilot-chat--ask prompt 'copilot-chat-prompt-cb)
+      )))
+
+(defun copilot-chat-check-callback-smerge (code-buffer)
+  "检查回调函数是否完成。"
+  (if copilot-chat--callback-finished
+      (let ((copilot-chat--smerge-block (copilot-chat--extract-last-smerge-block)))
+        (if copilot-chat--smerge-block
+            (with-current-buffer code-buffer
+              (insert copilot-chat--smerge-block)
+              (insert " copilot-chat")
+              (redisplay)
+              (smerge-mode 1)
+              )
+          (message "No smerge block found"))
+        )
+    (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)))
+
+(defun copilot-chat--extract-last-smerge-block ()
+  "从 BUFFER 中识别、提取并返回最后一个 smerge 格式的代码块。如果没有，返回 nil。"
+  (with-current-buffer (get-buffer copilot-chat--buffer)
+    (goto-char (point-max))
+    (if (re-search-backward "^<<<<<<< " nil t)
+        (let ((start (point)))
+          (if (re-search-forward "^>>>>>>>" nil t)
+              (buffer-substring-no-properties start (point))
+            nil))
+      nil)))
+
+(defun copilot-chat-write-new-code ()
+  "Read a string, showing historical inputs."
+  (interactive)
+  (let* ((code-buffer (current-buffer))
+         (prompt "Prompt to write new code: ")
+         (input (read-string prompt nil 'copilot-chat--prompt-history)))
+    (copilot-chat--insert-and-send-prompt (concat input ". output in smerge format"))
+    (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)
+    (switch-to-buffer-other-window code-buffer)
+    ))
 
 ;;;###autoload
 (defun copilot-chat-ask-and-insert()
