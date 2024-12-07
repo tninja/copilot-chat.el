@@ -3,36 +3,40 @@
 
 #+BEGIN_SRC plantuml :file dependencies.png
 @startuml
-!define RECTANGLE class
-!define DIAMOND diamond
+' 使用正确的类图语法
+skinparam class {
+    BackgroundColor White
+    ArrowColor Black
+    BorderColor Black
+}
 
-' 定义所有节点
-RECTANGLE copilot-chat--write-buffer
-RECTANGLE copilot-chat--format-data
-DIAMOND copilot-chat-prompt-send
-RECTANGLE copilot-chat--ready-p
-RECTANGLE copilot-chat--create-req
-RECTANGLE copilot-chat--ask
-RECTANGLE copilot-chat--uuid
-RECTANGLE copilot-chat--machine-id
-RECTANGLE copilot-chat--auth
-RECTANGLE copilot-chat--login
-RECTANGLE copilot-chat--renew-token
-RECTANGLE copilot-chat--curl-login
-RECTANGLE copilot-chat--curl-renew-token
-RECTANGLE copilot-chat--request-login
-RECTANGLE copilot-chat--request-renew-token
-RECTANGLE copilot-chat--curl-ask
-RECTANGLE copilot-chat--request-ask
-RECTANGLE copilot-chat--create
-RECTANGLE copilot-chat--get-cached-token
+' 定义节点类型
+class copilot-chat--write-buffer
+class copilot-chat--format-data
+class "copilot-chat-prompt-send" as prompt_send
+class copilot-chat--ready-p
+class copilot-chat--create-req
+class copilot-chat--ask
+class copilot-chat--uuid
+class copilot-chat--machine-id
+class copilot-chat--auth
+class copilot-chat--login
+class copilot-chat--renew-token
+class copilot-chat--curl-login
+class copilot-chat--curl-renew-token
+class copilot-chat--request-login
+class copilot-chat--request-renew-token
+class copilot-chat--curl-ask
+class copilot-chat--request-ask
+class copilot-chat--create
+class copilot-chat--get-cached-token
 
 ' 添加关系
-copilot-chat-prompt-send --> copilot-chat--ready-p
-copilot-chat-prompt-send --> copilot-chat-reset
-copilot-chat-prompt-send --> copilot-chat--write-buffer
-copilot-chat-prompt-send --> copilot-chat--format-data
-copilot-chat-prompt-send --> copilot-chat--ask
+prompt_send --> copilot-chat--ready-p
+prompt_send --> copilot-chat-reset
+prompt_send --> copilot-chat--write-buffer
+prompt_send --> copilot-chat--format-data
+prompt_send --> copilot-chat--ask
 
 copilot-chat--create-req --> copilot-chat-history
 copilot-chat--create-req --> copilot-chat-buffers
@@ -56,26 +60,27 @@ copilot-chat--auth --> copilot-chat--login
 copilot-chat--auth --> copilot-chat--renew-token
 
 ' Shell Maker 相关
-DIAMOND copilot-chat--shell-maker-custom-prompt-selection
-RECTANGLE copilot-chat--shell-maker-insert-and-send-prompt
-DIAMOND copilot-chat--shell-maker-display
-RECTANGLE copilot-chat--shell-maker-copy-faces
-RECTANGLE copilot-chat--shell-cb-prompt
-RECTANGLE copilot-chat--shell-cb
-RECTANGLE copilot-chat--shell
-RECTANGLE copilot-chat-shell-maker-init
+class "copilot-chat--shell-maker-custom-prompt-selection" as shell_prompt_selection
+class copilot-chat--shell-maker-insert-and-send-prompt
+class "copilot-chat--shell-maker-display" as shell_maker_display
+class copilot-chat--shell-maker-copy-faces
+class copilot-chat--shell-cb-prompt
+class copilot-chat--shell-cb
+class copilot-chat--shell
+class copilot-chat-shell-maker-init
 
-copilot-chat--shell-maker-custom-prompt-selection --> copilot-chat-reset
-copilot-chat--shell-maker-custom-prompt-selection --> copilot-chat--shell-maker-insert-and-send-prompt
+shell_prompt_selection --> copilot-chat-reset
+shell_prompt_selection --> copilot-chat--shell-maker-insert-and-send-prompt
 
-copilot-chat--shell-maker-display --> copilot-chat-reset
-copilot-chat--shell-maker-display --> copilot-chat--shell-maker-prepare-buffers
+shell_maker_display --> copilot-chat-reset
+shell_maker_display --> copilot-chat--shell-maker-prepare-buffers
 
 copilot-chat--shell-cb --> copilot-chat--shell-cb-prompt
 copilot-chat--shell-cb --> copilot-chat--ask
 
 copilot-chat--shell --> shell-maker-start
 copilot-chat-shell-maker-init --> copilot-chat--shell-maker-clean
+
 @enduml
 #+END_SRC
 
