@@ -1,0 +1,153 @@
+
+* Function call dependencies
+
+#+BEGIN_SRC plantuml :file dependencies.png
+@startuml
+!define RECTANGLE class
+!define DIAMOND diamond
+
+RECTANGLE copilot-chat--write-buffer
+
+RECTANGLE copilot-chat--format-data
+
+DIAMOND copilot-chat-prompt-send
+copilot-chat-prompt-send --> copilot-chat--ready-p
+copilot-chat-prompt-send --> copilot-chat-reset
+copilot-chat-prompt-send --> copilot-chat--write-buffer
+copilot-chat-prompt-send --> copilot-chat--format-data
+copilot-chat-prompt-send --> copilot-chat--ask
+
+RECTANGLE copilot-chat--create-req
+copilot-chat--create-req --> copilot-chat-history
+copilot-chat--create-req --> copilot-chat-buffers
+
+RECTANGLE copilot-chat--ask
+copilot-chat--ask --> copilot-chat-history
+copilot-chat--ask --> copilot-chat--auth
+copilot-chat--ask --> copilot-chat--curl-ask
+copilot-chat--ask --> copilot-chat--request-ask
+
+RECTANGLE copilot-chat--ready-p
+copilot-chat--ready-p --> copilot-chat-ready
+
+RECTANGLE copilot-chat--uuid
+
+RECTANGLE copilot-chat--machine-id
+
+RECTANGLE copilot-chat--request-token-cb
+
+RECTANGLE copilot-chat--request-code-cb
+copilot-chat--request-code-cb --> copilot-chat--request-token-cb
+
+RECTANGLE copilot-chat--request-login
+copilot-chat--request-login --> copilot-chat--request-code-cb
+
+RECTANGLE copilot-chat--request-renew-token
+copilot-chat--request-renew-token --> copilot-chat--request-renew-token-cb
+
+RECTANGLE copilot-chat--request-ask
+copilot-chat--request-ask --> copilot-chat--request-ask-parser
+
+RECTANGLE copilot-chat--curl-login
+copilot-chat--curl-login --> copilot-chat--curl-parse-login
+copilot-chat--curl-parse-login --> copilot-chat--curl-parse-github-token
+
+RECTANGLE copilot-chat--curl-renew-token
+copilot-chat--curl-renew-token --> copilot-chat--curl-parse-renew-token
+
+RECTANGLE copilot-chat--curl-analyze-response
+copilot-chat--curl-analyze-response --> copilot-chat--curl-extract-segment
+
+RECTANGLE copilot-chat--curl-ask
+copilot-chat--curl-ask --> copilot-chat--curl-analyze-response
+
+RECTANGLE copilot-chat--create
+copilot-chat--create --> copilot-chat--get-cached-token
+copilot-chat--create --> copilot-chat--uuid
+copilot-chat--create --> copilot-chat--machine-id
+
+RECTANGLE copilot-chat--login
+copilot-chat--login --> copilot-chat--curl-login
+copilot-chat--login --> copilot-chat--request-login
+
+RECTANGLE copilot-chat--renew-token
+copilot-chat--renew-token --> copilot-chat--curl-renew-token
+copilot-chat--renew-token --> copilot-chat--request-renew-token
+
+RECTANGLE copilot-chat--auth
+copilot-chat--auth --> copilot-chat--login
+copilot-chat--auth --> copilot-chat--renew-token
+
+RECTANGLE copilot-chat--add-buffer
+
+RECTANGLE copilot-chat--clear-buffers
+
+RECTANGLE copilot-chat--del-buffer
+
+RECTANGLE copilot-chat--get-buffers
+
+RECTANGLE copilot-chat--markdown-format-data
+
+RECTANGLE copilot-chat--markdown-clean
+
+RECTANGLE copilot-chat-markdown-init
+copilot-chat-markdown-init --> copilot-chat--markdown-clean
+
+RECTANGLE copilot-chat--org-format-data
+
+RECTANGLE copilot-chat--org-clean
+
+RECTANGLE copilot-chat-org-init
+copilot-chat-org-init --> copilot-chat--org-clean
+
+RECTANGLE test-major-mode
+
+RECTANGLE test-copilot-chat--build-prompt-suffix-no-suffix
+test-copilot-chat--build-prompt-suffix-no-suffix --> test-major-mode
+
+RECTANGLE test-copilot-chat--build-prompt-suffix-with-suffix
+test-copilot-chat--build-prompt-suffix-with-suffix --> test-major-mode
+
+RECTANGLE test-copilot-chat--build-prompt-suffix-different-mode
+test-copilot-chat--build-prompt-suffix-different-mode --> test-major-mode
+
+RECTANGLE setup-copilot-chat-instance
+
+RECTANGLE test-copilot-chat--create-req-no-context
+test-copilot-chat--create-req-no-context --> setup-copilot-chat-instance
+
+RECTANGLE test-copilot-chat--create-req-with-context
+test-copilot-chat--create-req-with-context --> setup-copilot-chat-instance
+
+DIAMOND copilot-chat--shell-maker-custom-prompt-selection
+copilot-chat--shell-maker-custom-prompt-selection --> copilot-chat-reset
+copilot-chat--shell-maker-custom-prompt-selection --> copilot-chat--shell-maker-insert-and-send-prompt
+
+RECTANGLE copilot-chat--shell-maker-insert-and-send-prompt
+copilot-chat--shell-maker-insert-and-send-prompt --> copilot-chat--shell-maker-prepare-buffers
+copilot-chat--shell-maker-insert-and-send-prompt --> shell-maker-submit
+
+DIAMOND copilot-chat--shell-maker-display
+copilot-chat--shell-maker-display --> copilot-chat-reset
+copilot-chat--shell-maker-display --> copilot-chat--shell-maker-prepare-buffers
+
+RECTANGLE copilot-chat--shell-maker-copy-faces
+copilot-chat--shell-maker-copy-faces --> copilot-chat--shell-maker-font-lock-faces
+
+RECTANGLE copilot-chat--shell-cb-prompt
+copilot-chat--shell-cb-prompt --> copilot-chat--shell-maker-copy-faces
+
+RECTANGLE copilot-chat--shell-cb
+copilot-chat--shell-cb --> copilot-chat--shell-cb-prompt
+copilot-chat--shell-cb --> copilot-chat--ask
+
+RECTANGLE copilot-chat--shell
+copilot-chat--shell --> shell-maker-start
+
+RECTANGLE copilot-chat-shell-maker-init
+copilot-chat-shell-maker-init --> copilot-chat--shell-maker-clean
+@enduml
+#+END_SRC
+
+#+results:
+[[file:dependencies.png]]
