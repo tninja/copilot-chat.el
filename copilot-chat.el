@@ -258,7 +258,8 @@ Optional argument BUFFER is the buffer to write data in."
   (let* ((code-buffer (current-buffer))
          (question "Prompt to write new code: ")
          (instruction (read-string question nil 'copilot-chat--prompt-history))
-         (prompt (concat "Do you know the emacs smerge-mode format? " instruction ". output in smerge format (start with <<<<<<<)")))
+         (prompt (concat "Do you know the emacs smerge-mode format? " instruction ". output in smerge format (start with <<<<<<<). Smerge format should only include code and proper comment in English, with right indentation.")))
+        (message "Please do not move your cursor. Be patient and wait for Copilot Chat to generate the code.")
     (copilot-chat--insert-and-send-prompt prompt)
     (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)
     (switch-to-buffer-other-window code-buffer)
@@ -272,8 +273,9 @@ Optional argument BUFFER is the buffer to write data in."
              (code (buffer-substring-no-properties (region-beginning) (region-end)))
              (question "Prompt to rewrite existing code: ")
              (instruction (read-string question nil 'copilot-chat--prompt-history))
-             (prompt (format "Do you know the emacs smerge-mode format? Rewrite the following code block: %s, with instruction: %s. Output in emacs smerge-mode code format (start with <<<<<<<) with original code and rewritten code"
+             (prompt (format "Do you know the emacs smerge-mode format? Rewrite the following code block: %s, with instruction: %s. Output in emacs smerge-mode code format (start with <<<<<<<) with original code and rewritten code. smerge format should only include code and proper comment in English, with right indentation."
                              code instruction)))
+        (message "Please do not move your cursor. Be patient and wait for Copilot Chat to update the code.")
         (copilot-chat--insert-and-send-prompt prompt)
         (run-with-timer 0.2 nil 'copilot-chat-check-callback-smerge code-buffer)
         (switch-to-buffer-other-window code-buffer)
@@ -471,29 +473,7 @@ It can be used to review the magit diff for my change, or other people's"
   (let ((buffer (get-buffer-create copilot-chat-list-buffer)))
     (with-current-buffer buffer
       (copilot-chat-list-mode))
-    (switch-to-buffer buffer)))
-
-(defun copilot-chat--inherit-source-highlighting (source-buffer chat-buffer)
-  "Inherit syntax highlighting settings from SOURCE-BUFFER."
-  (with-current-buffer source-buffer
-    (let ((source-keywords font-lock-keywords)
-          (source-keywords-only font-lock-keywords-only)
-          (source-keywords-case-fold-search font-lock-keywords-case-fold-search)
-          (source-syntax-table (syntax-table))
-          (source-defaults font-lock-defaults))
-      (with-current-buffer chat-buffer
-        (set-syntax-table source-syntax-table)
-        (setq font-lock-defaults
-              (if source-defaults
-                  source-defaults
-                `((,source-keywords)
-                  nil
-                  ,source-keywords-case-fold-search)))
-        (setq font-lock-keywords source-keywords
-              font-lock-keywords-only source-keywords-only
-              font-lock-keywords-case-fold-search source-keywords-case-fold-search)
-        (font-lock-mode 1)
-        (font-lock-ensure)))))
+    (switch-to-buffer buffer))
 
 (defun copilot-chat--prepare-buffers()
   "Create copilot-chat buffers."
@@ -501,10 +481,7 @@ It can be used to review the magit diff for my change, or other people's"
         (chat-buffer (get-buffer-create copilot-chat--buffer))
         (prompt-buffer (get-buffer-create copilot-chat--prompt-buffer)))
     (with-current-buffer chat-buffer
-      (copilot-chat-mode)
-      (when (with-current-buffer source-buffer
-              (derived-mode-p 'prog-mode))
-        (copilot-chat--inherit-source-highlighting source-buffer chat-buffer)))
+      (copilot-chat-mode))
     (with-current-buffer prompt-buffer
       (copilot-chat-prompt-mode))
   (list chat-buffer prompt-buffer)))
